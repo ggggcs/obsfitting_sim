@@ -1,0 +1,17 @@
+#$(optenv ROBOT_NAMESPACE aaa1ck):
+  joint_state_controller:
+    type: "joint_state_controller/JointStateController"
+    publish_rate: 50
+  left_steer_controller:
+    type: "position_controllers/JointPositionController"
+    joint: left_front_steerlink2base_joint
+  right_steer_controller:
+    type: "position_controllers/JointPositionController"
+    joint: right_front_steerlink2base_joint
+  left_rear_wheel_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: left_rearwheel2steerlink_joint
+  right_rear_wheel_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: right_rearwheel2steerlink_joint
+

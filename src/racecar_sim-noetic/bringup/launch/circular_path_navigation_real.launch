@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- ==================== 参数配置 ==================== -->
+    <arg name="use_sim_time" default="false"/>
+    <param name="use_sim_time" value="$(arg use_sim_time)"/>
+    
+    <!-- ==================== 1. 启动实车硬件接口 ==================== -->
+    <!-- 注意：根据您的实车配置修改此部分 -->
+    <!-- 例如：启动激光雷达、IMU、电机驱动等 -->
+    <!-- <include file="$(find your_car_package)/launch/hardware.launch" /> -->
+    
+    <!-- ==================== 2. 启动LIO-SAM建图与定位 ==================== -->
+    <rosparam file="$(find lio_sam)/config/params.yaml" command="load" />
+    <include file="$(find lio_sam)/launch/include/module_loam.launch" />
+    
+    <!-- ==================== 3. 启动障碍物检测与拟合 ==================== -->
+    <include file="$(find obs_fitting)/launch/obs_fitting.launch" />
+    
+    <!-- ==================== 4. 圆形路径发布器 (替代全局规划器) ==================== -->
+    <node name="circular_path_publisher" pkg="bringup" type="circular_path_publisher.py" output="screen">
+        <rosparam file="$(find bringup)/param/circular_path_params.yaml" command="load"/>
+    </node>
+    
+    <!-- ==================== 5. 启动向量场局部规划器 (C++版本) ==================== -->
+    <node name="vector_field_planner_cpp" pkg="bringup" type="vector_field_planner_cpp" output="screen">
+        <rosparam file="$(find bringup)/param/vector_field_planner_params.yaml" command="load"/>
+    </node>
+    
+    <!-- ==================== 6. 导航接口节点 ==================== -->
+    <node name="nav_sim" pkg="racecar_description" type="nav_sim.py" output="screen" respawn="false"/>
+    
+    <!-- ==================== 7. 可视化 ==================== -->
+    <node name="rviz" pkg="rviz" type="rviz" 
+          args="-d $(find bringup)/rviz/lio_sam_navigation.rviz" 
+          required="false" respawn="false"/>
+    
+    <!-- ==================== 说明 ==================== -->
+    <!--
+    实车圆形路径导航架构 (基于向量场规划器):
+    
+    重要修改:
+    - use_sim_time 设置为 false，使用实车真实时间
+    - 移除Gazebo仿真环境启动
+    - 添加实车硬件接口启动（需要根据您的实车配置修改）
+    
+    1. 硬件接口: 根据实车配置启动传感器和执行器
+       - 激光雷达驱动
+       - IMU驱动  
+       - 电机控制驱动
+       - 其他传感器
+    
+    2. 路径生成: circular_path_publisher (圆形路径)
+       - 输出: 圆形路径 /move_base/NavfnROS/plan
+       - 参数: 圆心、半径、方向等
+    
+    3. 局部规划: 向量场规划器 (C++)
+       - 输入: 
+         * 圆形路径 (从circular_path_publisher)
+         * 障碍物椭圆 (从obs_fitting)
+         * 当前位置 (从LIO-SAM里程计)
+       - 输出: 速度命令 /cmd_vel
+       - 方法: 引导向量场避障
+       - 特性: 
+         * 使用Eigen库进行矩阵运算
+         * 高性能C++实现
+         * 多线程安全的障碍物数据访问
+         * 实时性能监控
+    
+    4. 控制: nav_sim.py
+       - 将/cmd_vel转换为实车控制命令
+    
+    5. 可视化: RViz
+       - 显示路径、障碍物、向量场等
+    
+    性能监控话题:
+    - /vector_field_planner/field_compute_time: 向量场计算耗时（毫秒）
+    - /vector_field_planner/control_query_time: 控制查询耗时（毫秒）
+    - /vector_field_planner/viz_time: 可视化耗时（毫秒）
+    
+    调整参数:
+    - 修改 circular_path_params.yaml 调整圆形路径
+    - 修改 vector_field_planner_params.yaml 调整向量场行为
+    - 根据实车性能调整 control_rate 参数
+    
+    安全注意事项:
+    - 确保实车有适当的安全停止机制
+    - 在测试前进行低速测试
+    - 监控所有传感器数据
+    -->
+    
+</launch>

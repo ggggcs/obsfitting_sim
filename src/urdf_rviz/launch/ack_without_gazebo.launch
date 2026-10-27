@@ -1,0 +1,85 @@
+<launch>
+    <!-- 将 Urdf 文件的内容加载到参数服务器 -->
+    
+    <arg name="robot_namespace" default="aaa3ck"/>
+    <arg name="x" default="-3.0"/>
+    <arg name="y" default="-3.0"/>
+    <!--<arg name="z" default="14.7"/>	-->
+    <arg name="z" default="0"/>
+    <arg name="yaw" default="0.0"/>
+    <arg name="use_velodyne" default="false"/>
+    <arg name="use_realsense" default="false"/>
+
+    
+    
+
+    <!-- 在 gazebo 中显示机器人模型 -->
+
+    <group ns="$(arg robot_namespace)">
+      <param name="robot_description" 
+            command="$(find xacro)/xacro '$(find urdf_rviz)/urdf/xacro/ackermann.xacro' 
+            robot_namespace:=$(arg robot_namespace)
+            use_velodyne:=$(arg use_velodyne)
+            use_realsense:=$(arg use_realsense)" 
+      />
+
+      <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <remap from="joint_states" to="jointstates"/>
+      </node>
+    	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+        <param name="tf_prefix" value="$(arg robot_namespace)" />
+        <remap from="joint_states" to="jointstates"/>
+      </node>
+      <node pkg="gazebo_ros" type="spawn_model" name="model" args="
+              -x $(arg x)
+              -y $(arg y)
+              -z $(arg z)
+              -Y $(arg yaw) 
+              -urdf 
+              -model $(arg robot_namespace) 
+              -param robot_description"  
+              />
+      <rosparam file="$(find urdf_rviz)/config/rviz/ackermann/ackermann.yaml" command="load" subst_value="true"/>
+    
+      <!-- 加载控制器参数 -->
+      <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+        args="
+          joint_state_controller
+          left_steer_controller
+          right_steer_controller
+          left_rear_wheel_controller
+          right_rear_wheel_controller
+        " />
+      
+      <!-- 积分里程计信息 -->
+      <!-- <node pkg="urdf_rviz" type="odom_pub.py" name="odom">
+        <param name="namespace" value="$(arg robot_namespace)"/>
+        <param name="start_x" value="$(arg x)"/>
+        <param name="start_y" value="$(arg y)"/>
+        <param name="start_z" value="$(arg z)"/>
+        <param name="yaw_angle" value="$(arg yaw)"/>
+      </node> -->
+      
+      <!-- gazebo里程计信息 -->
+      <node pkg="urdf_rviz" type="odom_gazebo.py" name="odom_node">
+        <param name="namespace" value="$(arg robot_namespace)" />
+      </node>
+
+      <!-- 根据初始位置初始化gazebo里程计信息 -->
+      <!-- <node pkg="urdf_rviz" type="odom_gazebo_init.py" name="odom_node">
+        <param name="namespace" value="$(arg robot_namespace)" />
+      </node> -->
+
+      <!-- 根据Twist控制指令控制无人车移动 -->  
+      <node pkg="urdf_rviz" type="servo_commands_twist.py" name="servo_node"/>
+
+      <!--根据角度及速度控制指令控制无人车移动-->
+      <!-- <node pkg="urdf_rviz" type="servo_commands_ackermann" name="servo_node"/> -->
+
+    </group>
+
+    
+    
+    
+</launch>
+

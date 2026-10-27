@@ -1,0 +1,12 @@
+{
+    "ros.distro": "noetic",
+    "ROS2.distro": "noetic",
+    "python.autoComplete.extraPaths": [
+        "/home/gcs/kitti_test/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/gcs/kitti_test/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ]
+}

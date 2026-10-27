@@ -1,0 +1,269 @@
+<?xml version="1.0" ?>
+<robot name="my_sensors" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="support_length" value="0.05"/>
+    <xacro:property name="support_width" value="0.1"/>
+    <xacro:property name="support_height" value="0.2"/>
+    <xacro:property name="support_m" value="4"/>
+
+    <xacro:property name="laser_radius" value="0.02"/>
+    <xacro:property name="laser_height" value="0.04"/>
+    <xacro:property name="laser_m" value="0.5"/>
+
+    <xacro:property name="camera_length" value="0.01" /> 
+    <xacro:property name="camera_width" value="0.025" /> 
+    <xacro:property name="camera_height" value="0.025" />
+    <xacro:property name="camera_m" value="0.01" />
+
+    <arg name="use_velodyne" default="false"/>
+    <arg name="use_realsense" default="false"/>
+    <arg name="robot_namespace" default="aaa3ck"/>
+
+
+    <xacro:include filename="inertial_matrix.xacro"/>
+
+    <link name="support">
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="${support_length} ${support_width} ${support_height}"/>
+            </geometry>
+            <material name="blue">
+                <color rgba="0.0 0.0 1.0 0.5"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0000"/>
+            <geometry>
+                <box size="${support_length} ${support_width} ${support_height}"/>
+            </geometry>
+        </collision>
+        <xacro:Box_inertial_matrix m="${support_m}" l="${support_length}" w="${support_width}" h="${support_height}"/>
+    </link>
+    <gazebo reference="support">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+
+    <joint name="support2base" type="fixed">
+        <parent link="base_link"/>
+        <child link="support"/>
+        <origin xyz="${base_length/2-support_length/2} 0 ${base_height/2+support_height/2}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <xacro:unless value="$(arg use_velodyne)">
+        <link name="laser">
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <cylinder length="${laser_height}" radius="${laser_radius}"/>
+                </geometry>
+                <material name="black">
+                    <color rgba="0.0 0.0 0.0 0.5"/>
+                </material>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <cylinder length="${laser_height}" radius="${laser_radius}"/>
+                </geometry>
+            </collision>
+            <xacro:cylinder_inertial_matrix m="${laser_m}" r="${laser_radius}" h="${laser_height}"/>
+        </link>
+
+        <joint name="laser2support" type="fixed">
+            <parent link="support"/>
+            <child link="laser"/>
+            <origin xyz="0.0 0.0 ${support_height/2+laser_height/2}" rpy="0.0 0.0 0.0"/>
+        </joint>
+
+        <gazebo reference="laser">
+            <sensor type="ray" name="rplidar">
+                <pose>0 0 0 0 0 0</pose>
+                <visualize>false</visualize>
+                <update_rate>5.5</update_rate>
+                <ray>
+                    <scan>
+                        <horizontal>
+                            <samples>360</samples>
+                            <resolution>1</resolution>
+                            <min_angle>-3.14159</min_angle>
+                            <max_angle>3.14159</max_angle>
+                        </horizontal>
+                    </scan>
+                    <range>
+                        <min>0.10</min>
+                        <max>30.0</max>
+                        <resolution>0.01</resolution>
+                    </range>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.01</stddev>
+                    </noise>
+                </ray>
+                <plugin name="gazebo_rplidar" filename="libgazebo_ros_laser.so">
+                    <topicName>scan</topicName>
+                    <frameName>laser</frameName>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </xacro:unless>
+    <xacro:if value="$(arg use_velodyne)">
+        <xacro:arg name="gpu" default="false"/>
+        <xacro:property name="gpu" value="$(arg gpu)" />
+        <xacro:arg name="organize_cloud" default="false"/>
+        <xacro:property name="organize_cloud" value="$(arg organize_cloud)" />
+        <xacro:include filename="$(find velodyne_description)/urdf/HDL-32E.urdf.xacro"/>
+        <xacro:HDL-32E parent="support" name="velodyne2" topic="velodyne_points2" organize_cloud="${organize_cloud}" hz="10" samples="220" gpu="${gpu}">
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
+        </xacro:HDL-32E>
+    </xacro:if>
+
+
+    <xacro:unless value="$(arg use_realsense)">
+        <link name="camera">
+            <visual>
+                <geometry>
+                    <box size="${camera_length} ${camera_width} ${camera_height}" />
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+                <material name="black" >
+                    <color rgba="0.0 0.0 0.0 0.5"/>
+                </material>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="${camera_length} ${camera_width} ${camera_height}" />
+                </geometry>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            </collision>
+            <xacro:Box_inertial_matrix m="${camera_m}" l="${camera_length}" w="${camera_width}" h="${camera_height}" />
+        </link>
+    </xacro:unless>
+
+    <xacro:if value="$(arg use_realsense)">
+        <link name="camera">
+        <!-- <inertial>
+            <mass value="0.0564"/>
+            <inertia>
+            <ixx>4.1e-05</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>5.9e-06</iyy>
+            <iyz>0</iyz>
+            <izz>5.9e-06</izz>
+            </inertia>
+        </inertial> -->
+        <xacro:Box_inertial_matrix m="0.0564" l="0.02505" w="0.090" h="0.025" />
+        <visual name="visual">
+            <geometry>
+                <mesh filename="package://realsense_ros_gazebo/meshes/realsense_d435.stl"/>
+            </geometry>
+            <origin xyz="0.012525 0.0 0.0" rpy="1.5708 0 1.5708"/>
+            <material name="black">
+                <color rgba="0.0 0.0 0.0 0.5"/>
+            </material>
+        </visual>
+        <collision name='collision'>
+            <pose>0 0 0 0 0 0</pose>
+            <geometry>
+                <box size="0.02505 0.090 0.025"/>
+            </geometry>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+        </collision>
+        </link>
+    </xacro:if>
+
+    <joint name="camera2support" type="fixed">
+        <parent link="support" />
+        <child link="camera" />
+        <origin xyz="${support_length/2} 0.0 ${support_height/2 - 0.03 }" rpy="0 0 0"/>
+    </joint>
+    <gazebo reference="camera">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+    
+    <xacro:unless value="$(arg use_realsense)">
+        <gazebo reference="camera">
+        <!-- 类型设置为 camara -->
+            <sensor type="camera" name="camera_node">
+                <update_rate>30.0</update_rate> 
+                <!-- 更新频率 -->
+                <!-- 摄像头基本信息设置 -->
+                <camera name="head">
+                    <horizontal_fov>1.3962634</horizontal_fov>
+                    <image>
+                        <width>1280</width>
+                        <height>720</height>
+                        <format>R8G8B8</format>
+                    </image>
+                    <clip>
+                        <near>0.02</near>
+                        <far>300</far>
+                    </clip>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.007</stddev>
+                    </noise>
+                </camera>
+                <!-- 核心插件 -->
+                <plugin name="gazebo_camera" filename="libgazebo_ros_camera.so">
+                    <alwaysOn>true</alwaysOn>
+                    <updateRate>0.0</updateRate>
+                    <cameraName>camera</cameraName>
+                    <imageTopicName>image_raw</imageTopicName>
+                    <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+                    <frameName>camera</frameName>
+                    <hackBaseline>0.07</hackBaseline>
+                    <distortionK1>0.0</distortionK1>
+                    <distortionK2>0.0</distortionK2>
+                    <distortionK3>0.0</distortionK3>
+                    <distortionT1>0.0</distortionT1>
+                    <distortionT2>0.0</distortionT2>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </xacro:unless>
+
+    <xacro:if value="$(arg use_realsense)">
+        <link name="d435_depth_optical_frame"/>
+        <joint name="camera2d435_depth_optical_frame" type="fixed">
+            <parent link="camera"/>
+            <child link="d435_depth_optical_frame"/>
+            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+        </joint>
+
+        <link name="d435_color_optical_frame"/>
+        <joint name="camera2d435_color_optical_frame" type="fixed">
+            <parent link="camera"/>
+            <child link="d435_color_optical_frame"/>
+            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+        </joint>
+
+        <link name="d435_infra1_optical_frame"/>
+        <joint name="camera2d435_infra1_optical_frame" type="fixed">
+            <parent link="camera"/>
+            <child link="d435_infra1_optical_frame"/>
+            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+        </joint>
+
+        <link name="d435_infra2_optical_frame"/>
+        <joint name="camera2d435_infra2_optical_frame" type="fixed">
+            <parent link="camera"/>
+            <child link="d435_infra2_optical_frame"/>
+            <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+        </joint>
+
+        <xacro:include filename="$(find realsense_ros_gazebo)/sdf/realsense_camera/_d435.gazebo.xacro"/>
+        <xacro:gazebo_d435 
+            camera_name="d435" 
+            reference_link="camera" 
+            topics_ns="$(arg robot_namespace)/d435" 
+            depth_optical_frame="$(arg robot_namespace)/d435_depth_optical_frame" 
+            color_optical_frame="$(arg robot_namespace)/d435_color_optical_frame" 
+            infrared1_optical_frame="$(arg robot_namespace)/d435_infra1_optical_frame" 
+            infrared2_optical_frame="$(arg robot_namespace)/d435_infra2_optical_frame" 
+            publish_pointcloud="true"/>
+    </xacro:if>
+</robot>

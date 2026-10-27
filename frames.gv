@@ -1,0 +1,15 @@
+digraph G {
+"base_link" -> "base_footprint"[label="Broadcaster: /gazebo_odometry\nAverage rate: 28.263 Hz\nMost recent transform: 679.340 ( -0.073 sec old)\nBuffer length: 2.689 sec\n"];
+"base_link_lio" -> "base_link"[label="Broadcaster: /base_link_lio_to_base_link\nAverage rate: 10.361 Hz\nMost recent transform: 679.344 ( -0.077 sec old)\nBuffer length: 2.606 sec\n"];
+"map" -> "odom_lio"[label="Broadcaster: /lio_sam_imuPreintegration\nAverage rate: 100.380 Hz\nMost recent transform: 679.267 ( 0.000 sec old)\nBuffer length: 2.630 sec\n"];
+"odom_lio" -> "base_link_lio"[label="Broadcaster: /lio_sam_imuPreintegration\nAverage rate: 100.380 Hz\nMost recent transform: 679.267 ( 0.000 sec old)\nBuffer length: 2.630 sec\n"];
+"odom_lio" -> "lidar_link"[label="Broadcaster: /lio_sam_mapOptmization\nAverage rate: 5.421 Hz\nMost recent transform: 679.004 ( 0.263 sec old)\nBuffer length: 2.398 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 679.267"[ shape=plaintext ] ;
+ }->"map";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 679.267"[ shape=plaintext ] ;
+ }->"odom";
+}

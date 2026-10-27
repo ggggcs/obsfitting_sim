@@ -1,0 +1,255 @@
+<?xml version="1.0" ?>
+<robot name="ackermann_base_final" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- 参数 -->
+    <xacro:property name="PI" value="3.1415926" />
+    <!-- 车轮参数 -->
+    <xacro:property name="wheel_radius" value="0.04" />
+    <xacro:property name="wheel_height" value="0.03" />
+    <xacro:property name="wheel_in" value="0.0125" />
+    <!-- 基座参数 -->   
+    <xacro:property name="base_height" value="0.075" />
+    <xacro:property name="base_length" value="0.275" />
+    <xacro:property name="base_width" value="0.2" />
+    <!-- 车轮参数 -->
+    <xacro:property name="steering_link_length" value="0.02" /> 
+    <xacro:property name="steering_link_width" value="0.06" />
+    <xacro:property name="steering_link_height" value="0.02" />
+    <!-- 基座离地高度 -->
+    <xacro:property name="base_ground_clearance" value="0.02" />
+    <!-- 质量参数 -->
+    <xacro:property name="base_m" value="2" />
+    <xacro:property name="wheel_m" value="0.5" />  
+    <xacro:property name="steering_link_m" value="0.05" /> 
+
+    <xacro:include filename="inertial_matrix.xacro"/>
+
+    <link name="base_footprint">
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0.001"/>
+            </geometry>
+            <material name="yellow">
+                <color rgba="0.8 0.3 0.1 0.5" />
+            </material> 
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <sphere radius="0"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <link name="base_link">
+        <xacro:Box_inertial_matrix m="${base_m}" l="${base_length}" w="${base_width}" h="${base_height}" />
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="${base_length} ${base_width} ${base_height}"/>
+            </geometry>
+            <material name="blue">
+                <color rgba="0 0 1.0 0.5" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0 0 0"/>
+            </geometry>
+        </collision>
+    </link>
+    <gazebo reference="base_link">
+            <material>Gazebo/Blue</material>
+        </gazebo>
+    <joint name="base_link2base_footprint" type="fixed">
+        <parent link="base_footprint"/>
+        <child link="base_link"/>
+        <origin xyz="0.0 0.0 ${base_ground_clearance+base_height/2+0.001}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <xacro:macro name="define_steer_joint" params="name flag">
+        <link name="${name}_steer_link">
+            <xacro:Box_inertial_matrix m="${steering_link_m}" l="${steering_link_length}" w="${steering_link_width}" h="${steering_link_height}" />
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${steering_link_length} ${steering_link_width} ${steering_link_height}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="0 0 0"/>
+                </geometry>
+            </collision>
+        </link>
+        <joint name="${name}_steer_link2base_link" type="revolute">
+            <origin xyz="${base_length/2-wheel_in-wheel_radius} ${flag*(base_width/2-steering_link_width/2)} ${-(base_height/2 + base_ground_clearance - wheel_radius)}" rpy="0.0 0.0 0.0"/>
+            <parent link="base_link"/>
+            <child link="${name}_steer_link"/>
+            <axis xyz="0 0 1"/>
+            <dynamics damping="0.1" />
+            <limit lower="-0.6" upper="0.6" effort="0" velocity="3"/>
+        </joint>
+        <gazebo reference="${name}_steer_link">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+    </xacro:macro>
+    <xacro:define_steer_joint name="left" flag="1" />
+    <xacro:define_steer_joint name="right" flag="-1" />
+
+    <xacro:macro name="define_front_joint" params="name flag">
+        <link name="${name}_front_wheel">
+            <xacro:cylinder_inertial_matrix m="${wheel_m}" r="${wheel_radius}" h="${wheel_height}" />
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="${-PI/2} 0.0 0.0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_height}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="${-PI/2} 0.0 0.0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_height}"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="${name}_front_wheel">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+        <gazebo reference="${name}_front_wheel">
+            <mu1>0.9</mu1>    <!-- 显著降低静摩擦 -->
+            <mu2>0.6</mu2>    <!-- 降低动摩擦 -->
+        </gazebo>  
+        <joint name="${name}_front_wheel2${name}_steer_link" type="continuous">
+            <origin xyz="0 0 0.0" rpy="0.0 0.0 0.0"/>
+            <parent link="${name}_steer_link"/>
+            <child link="${name}_front_wheel"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+    </xacro:macro>
+    <xacro:define_front_joint name="left" flag="1" />
+    <xacro:define_front_joint name="right" flag="-1" />
+
+    <xacro:macro name="define_rear_joint" params="name flag">
+        <link name="${name}_rear_link">
+            <xacro:Box_inertial_matrix m="${steering_link_m}" l="${steering_link_length}" w="${steering_link_width}" h="${steering_link_height}" />
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${steering_link_length} ${steering_link_width} ${steering_link_height}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="0 0 0"/>
+                </geometry>
+            </collision>
+        </link>
+        <link name="${name}_rear_wheel">
+            <xacro:cylinder_inertial_matrix m="${wheel_m}" r="${wheel_radius}" h="${wheel_height}" />
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="${-PI/2} 0.0 0.0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_height}"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="${-PI/2} 0.0 0.0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_height}"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="${name}_rear_wheel">
+            <mu1>1.8</mu1>    <!-- 大幅提高静摩擦 -->
+            <mu2>1.2</mu2>    <!-- 提高动摩擦 -->
+        </gazebo>  
+        <joint name="${name}_rear_link2base_link" type="fixed">
+            <origin xyz="${-base_length/2+wheel_in+wheel_radius} ${flag*(base_width/2-steering_link_width/2)} ${-(base_height/2 + base_ground_clearance - wheel_radius)}" rpy="0.0 0.0 0.0"/>
+            <parent link="base_link"/>
+            <child link="${name}_rear_link"/>
+        </joint>
+        <joint name="${name}_rear_wheel2${name}_rear_link" type="continuous">
+            <origin xyz="0 0 0.0" rpy="0.0 0.0 0.0"/>
+            <parent link="${name}_rear_link"/>
+            <child link="${name}_rear_wheel"/>
+            <axis xyz="0 1 0"/>
+        </joint>
+        <gazebo reference="${name}_rear_wheel">
+            <material>Gazebo/Yellow</material>
+        </gazebo>
+    </xacro:macro>
+    <xacro:define_rear_joint name="left" flag="1" />
+    <xacro:define_rear_joint name="right" flag="-1" />
+    <xacro:macro name="define_wheel_trans" params="left_right front_rear steer_rear">
+        <transmission name="${left_right}_${front_rear}_wheel_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${left_right}_${front_rear}_wheel2${left_right}_${steer_rear}_link">
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${left_right}_${front_rear}_wheel_actuator">
+                <mechanicalReduction>1.0</mechanicalReduction>
+                <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+    <xacro:macro name="define_steer_trans" params="left_right">
+        <transmission name="${left_right}_steer_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${left_right}_steer_link2base_link">
+                <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="${left_right}_steer_actuator">
+                <mechanicalReduction>1.0</mechanicalReduction>
+                <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+            </actuator>
+        </transmission>
+    </xacro:macro>
+    <xacro:define_wheel_trans left_right="left" front_rear="rear" steer_rear="rear" />
+    <xacro:define_wheel_trans left_right="right" front_rear="rear" steer_rear="rear" />
+    <xacro:define_steer_trans left_right="left" />
+    <xacro:define_steer_trans left_right="right" />
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>ackermann_base_final</robotNamespace>
+            <robotParam>robot_description</robotParam>
+            <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+            <legacyModeNS>true</legacyModeNS>
+            <robotBaseFrame>base_footprint</robotBaseFrame> 
+        </plugin>
+    </gazebo>
+    <gazebo reference="base_footprint">
+        <turnGravityOff>true</turnGravityOff>
+    </gazebo>
+    
+    
+	<gazebo reference="base_link">
+		<gravity>true</gravity>
+		<sensor name="imu_sensor" type="imu">
+		<always_on>true</always_on>
+		<update_rate>100</update_rate>
+		<visualize>true</visualize>
+		<topic>__default_topic__</topic>
+		<plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+		    <robotNamespace>ackermann_base_final</robotNamespace>
+		    <topicName>imu</topicName>
+		    <appendRobotNamespace>false</appendRobotNamespace>
+		    <bodyName>base_link</bodyName>
+		    <updateRateHZ>100.0</updateRateHZ>
+		    <gaussianNoise>0.0</gaussianNoise>
+		    <xyzOffset>0 0 0</xyzOffset>
+		    <rpyOffset>0 0 0</rpyOffset>
+		    <frameName>imu_link</frameName>
+		</plugin>
+		<pose>0 0 0 0 0 0</pose>
+		</sensor>
+	</gazebo>
+
+</robot>
+
+
+
+

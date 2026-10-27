@@ -1,0 +1,65 @@
+<launch>
+    <!-- 将 Urdf 文件的内容加载到参数服务器 -->
+    
+    <arg name="robot_namespace" default="/aaa3ck"/>
+    <arg name="x" default="-3.0"/>
+    <arg name="y" default="-3.0"/>
+    <!--<arg name="z" default="14.7"/>	-->
+    <arg name="z" default="0"/>
+    <arg name="yaw" default="0.0"/>
+
+    <node pkg="rviz" type="rviz" name="rviz" />
+    <!-- 启动 gazebo -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" />
+
+    <!-- 在 gazebo 中显示机器人模型 -->
+    
+
+    <group ns="$(arg robot_namespace)">
+      <param name="robot_description" command="$(find xacro)/xacro '$(find urdf_rviz)/urdf/xacro/ackermann.xacro' robot_namespace:=$(arg robot_namespace)" />
+      <rosparam file="$(find urdf_rviz)/config/rviz/ackermann/ackermann.yaml" command="load" subst_value="true"/>
+
+    	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <remap from="$(arg robot_namespace)/joint_states" to="$(arg robot_namespace)/jointstates"/>
+      </node>
+    	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+        <remap from="$(arg robot_namespace)/joint_states" to="$(arg robot_namespace)/jointstates"/>
+      </node>
+      <node pkg="gazebo_ros" type="spawn_model" name="model" args="
+              -x $(arg x)
+              -y $(arg y)
+              -z $(arg z)
+              -Y $(arg yaw) 
+              -urdf 
+              -model ackermann 
+              -param /$(arg robot_namespace)/robot_description"  
+              >
+      </node>
+      
+    
+      <!-- 加载控制器参数 -->
+      <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+        ns="$(arg robot_namespace)"
+        args="
+          joint_state_controller
+          left_steer_controller
+          right_steer_controller
+          left_rear_wheel_controller
+          right_rear_wheel_controller
+        " />
+      
+
+    </group>
+
+
+    <!-- <node pkg="urdf_rviz" type="odom_pub.py" name="odom1">
+      <param name="namespace" value="$(arg robot_namespace)"/>
+      <param name="start_x" value="$(arg x)"/>
+      <param name="start_y" value="$(arg y)"/>
+      <param name="start_z" value="$(arg z)"/>
+      <param name="yaw_angle" value="$(arg yaw)"/>
+    </node> -->
+    
+    
+</launch>
+

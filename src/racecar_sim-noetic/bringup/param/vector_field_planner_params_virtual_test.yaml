@@ -1,0 +1,75 @@
+# 虚拟障碍物边界 - 测试配置示例
+
+# ========== 路径定义 ==========
+path_type: 'circle'
+circle_center_x: 0.0
+circle_center_y: 0.0
+circle_radius: 4.0
+circle_direction: 'ccw'
+
+# ========== 向量场增益 ==========
+k_p: 0.6
+k_r: 1.5
+
+# Bump函数参数
+l1: 0.3
+l2: 0.3
+c: -0.3
+
+# ========== 边界配置 ==========
+# 传统边界
+repulsive_offset: 0.5    # 排斥边界
+reactive_offset: 0.8     # 真实反应边界
+
+# ========== 虚拟障碍物边界（启用） ==========
+enable_virtual_boundary: true        # ✅ 启用虚拟边界机制
+virtual_reactive_offset: 1.2         # 虚拟反应边界（比 reactive_offset 大 0.4m）
+k_c: 0.5                             # 衰减系数（推荐起始值）
+
+# 说明：
+# - 缓冲区宽度 = virtual_reactive_offset - reactive_offset = 0.4m
+# - 在这个缓冲区内，系统会平滑混合路径跟踪向量和虚拟排斥向量
+# - 转向会更加平滑，减小侧向加速度
+
+# ========== 控制参数 ==========
+max_speed: 0.7
+control_rate: 50.0
+goal_tolerance: 0.4
+lookahead_distance: 0.2
+
+# ========== 阿克曼模型 ==========
+wheelbase: 0.335
+max_steering_angle: 0.6
+steering_gain: 1.0
+
+# ========== 向量场可视化 ==========
+field_center_x: 0.0
+field_center_y: 0.0
+field_range: 15.0
+field_resolution: 0.5
+viz_frequency: 10.0
+
+# ========== 局部路径 ==========
+local_path_length: 3.0
+local_path_step: 0.02
+
+# ========== 障碍物管理 ==========
+obstacle_association_threshold: 0.5
+obstacle_duration_time: 5.0
+
+# ========== 测试场景建议 ==========
+# 
+# 场景 1: 高速平滑避障（推荐用于测试）
+# - virtual_reactive_offset: 1.4 （更宽缓冲区）
+# - k_c: 0.3 （更平滑的过渡）
+# - max_speed: 1.0
+# 
+# 场景 2: 标准场景（当前配置）
+# - virtual_reactive_offset: 1.2
+# - k_c: 0.5
+# - max_speed: 0.7
+# 
+# 场景 3: 狭窄空间快速响应
+# - virtual_reactive_offset: 1.0 （窄缓冲区）
+# - k_c: 0.8 （更快的响应）
+# - max_speed: 0.5

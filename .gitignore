@@ -1,0 +1,10 @@
+build/
+devel/
+build_isolated/
+devel_isolated/
+install/
+log/
+logs/
+*.pyc
+__pycache__/
+.catkin_tools/

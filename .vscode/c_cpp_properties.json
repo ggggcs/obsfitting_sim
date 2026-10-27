@@ -1,0 +1,26 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/gcs/kitti_test/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/gcs/kitti_test/src/racecar_sim-noetic/bringup/include/**",
+        "/home/gcs/kitti_test/src/LIO-SAM/include/**",
+        "/home/gcs/kitti_test/src/obs_fitting/include/**",
+        "/home/gcs/kitti_test/src/urdf_rviz/include/**",
+        "/home/gcs/kitti_test/src/velodyne_simulator/velodyne_gazebo_plugins/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

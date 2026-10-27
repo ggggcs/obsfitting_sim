@@ -1,0 +1,17 @@
+ackermann_base_final:
+  joint_state_controller:
+    type: "joint_state_controller/JointStateController"
+    publish_rate: 50
+  left_steer_controller:
+    type: "position_controllers/JointPositionController"
+    joint: left_steer_link2base_link
+  right_steer_controller:
+    type: "position_controllers/JointPositionController"
+    joint: right_steer_link2base_link
+  left_rear_wheel_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: left_rear_wheel2left_rear_link
+  right_rear_wheel_controller:
+    type: "velocity_controllers/JointVelocityController"
+    joint: right_rear_wheel2right_rear_link
+

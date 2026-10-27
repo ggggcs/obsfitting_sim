@@ -1,0 +1,70 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+  - Class: rviz/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Name: Grid
+      Plane: XY
+      Reference Frame: <Fixed Frame>
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Enabled: true
+      Name: LIO-SAM Map
+      Topic: /lio_sam/mapping/map_global
+      Size (m): 0.05
+    - Alpha: 1
+      Class: rviz/PointCloud2
+      Color: 85; 255; 127
+      Enabled: true
+      Name: Current Scan
+      Topic: /velodyne_points
+      Size (m): 0.02
+    - Class: rviz/TF
+      Enabled: true
+      Name: TF
+      Show Axes: true
+      Show Names: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 25; 255; 0
+      Enabled: true
+      Name: Path
+      Topic: /lio_sam/mapping/path
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 2
+      Name: Robot
+      Radius: 0.1
+      Reference Frame: base_link
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: base_link
+    Frame Rate: 30
+  Name: root
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 30
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.06
+        Value: false
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Name: Current View
+      Pitch: 0.785
+      Target Frame: <Fixed Frame>
+      Yaw: 0.785
